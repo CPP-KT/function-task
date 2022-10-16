@@ -99,6 +99,48 @@ TEST(function_test, small_func_assignment_operator_move) {
   EXPECT_EQ(42, g());
 }
 
+struct small_func_with_pointer {
+  explicit small_func_with_pointer() : pointer(this) {}
+
+  void swap(small_func_with_pointer& other) noexcept {
+    std::swap(pointer, other.pointer);
+  }
+
+  small_func_with_pointer(const small_func_with_pointer&) noexcept
+      : pointer(this) {}
+
+  small_func_with_pointer&
+  operator=(const small_func_with_pointer& other) noexcept {
+    if (this != &other) {
+      small_func_with_pointer(other).swap(*this);
+    }
+    return *this;
+  }
+
+  small_func_with_pointer(small_func_with_pointer&&) noexcept : pointer(this) {}
+
+  small_func_with_pointer& operator=(small_func_with_pointer&& other) noexcept {
+    if (this != &other) {
+      small_func_with_pointer(std::move(other)).swap(*this);
+    }
+    return *this;
+  }
+
+  bool operator()() const {
+    return pointer == this;
+  }
+
+private:
+  small_func_with_pointer* pointer;
+};
+
+TEST(function_test, small_func_with_pointer_assignment_operator_move) {
+  function<int()> f = small_func_with_pointer();
+  function<int()> g = small_func_with_pointer();
+  f = std::move(g);
+  EXPECT_TRUE(f());
+}
+
 TEST(function_test, small_func_assignment_operator_self) {
   function<int()> f = small_func(42);
   f = f;
