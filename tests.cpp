@@ -99,6 +99,18 @@ TEST(function_test, small_func_assignment_operator_move) {
   EXPECT_EQ(42, g());
 }
 
+TEST(function_test, small_func_assignment_operator_self) {
+  function<int()> f = small_func(42);
+  f = f;
+  EXPECT_EQ(42, f());
+}
+
+TEST(function_test, small_func_assignment_operator_move_self) {
+  function<int()> f = small_func(42);
+  f = std::move(f);
+  EXPECT_EQ(42, f());
+}
+
 struct small_func_with_pointer {
   explicit small_func_with_pointer() : pointer(this) {}
 
@@ -134,23 +146,30 @@ private:
   small_func_with_pointer* pointer;
 };
 
+TEST(function_test, small_func_with_pointer_copy_ctor) {
+  function<int()> g = small_func_with_pointer();
+  function<int()> f(g);
+  EXPECT_TRUE(f() && g());
+}
+
+TEST(function_test, small_func_with_pointer_assignment_operator_copy) {
+  function<int()> f = small_func_with_pointer();
+  function<int()> g = small_func_with_pointer();
+  f = g;
+  EXPECT_TRUE(f() && g());
+}
+
+TEST(function_test, small_func_with_pointer_move_ctor) {
+  function<int()> g = small_func_with_pointer();
+  function<int()> f(std::move(g));
+  EXPECT_TRUE(f());
+}
+
 TEST(function_test, small_func_with_pointer_assignment_operator_move) {
   function<int()> f = small_func_with_pointer();
   function<int()> g = small_func_with_pointer();
   f = std::move(g);
   EXPECT_TRUE(f());
-}
-
-TEST(function_test, small_func_assignment_operator_self) {
-  function<int()> f = small_func(42);
-  f = f;
-  EXPECT_EQ(42, f());
-}
-
-TEST(function_test, small_func_assignment_operator_move_self) {
-  function<int()> f = small_func(42);
-  f = std::move(f);
-  EXPECT_EQ(42, f());
 }
 
 TEST(function_test, small_func_target) {
