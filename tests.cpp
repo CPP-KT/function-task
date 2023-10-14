@@ -1,10 +1,11 @@
 #include "function.h"
+
 #include <gtest/gtest.h>
 
 TEST(function_test, default_ctor) {
   function<void()> x;
   function<void(int, int, int)> y;
-  function<double && (float&, int const&, int)> z;
+  function<double && (float&, const int&, int)> z;
 }
 
 TEST(function_test, empty_convertion_to_bool) {
@@ -118,11 +119,9 @@ struct small_func_with_pointer {
     std::swap(pointer, other.pointer);
   }
 
-  small_func_with_pointer(const small_func_with_pointer&) noexcept
-      : pointer(this) {}
+  small_func_with_pointer(const small_func_with_pointer&) noexcept : pointer(this) {}
 
-  small_func_with_pointer&
-  operator=(const small_func_with_pointer& other) noexcept {
+  small_func_with_pointer& operator=(const small_func_with_pointer& other) noexcept {
     if (this != &other) {
       small_func_with_pointer(other).swap(*this);
     }
@@ -183,12 +182,11 @@ struct large_func {
     ++n_instances;
   }
 
-  large_func(large_func const& other) noexcept
-      : that(this), value(other.value) {
+  large_func(const large_func& other) noexcept : that(this), value(other.value) {
     ++n_instances;
   }
 
-  large_func& operator=(large_func const& rhs) noexcept {
+  large_func& operator=(const large_func& rhs) noexcept {
     value = rhs.value;
     return *this;
   }
@@ -285,9 +283,10 @@ struct throwing_move {
     return 42;
   }
 
-  throwing_move(throwing_move const&) {
-    if (enable_exception)
+  throwing_move(const throwing_move&) {
+    if (enable_exception) {
       throw exception();
+    }
   }
 
   static bool enable_exception;
@@ -322,7 +321,7 @@ struct throwing_copy {
 
   throwing_copy(throwing_copy&&) noexcept {}
 
-  throwing_copy(throwing_copy const&) {
+  throwing_copy(const throwing_copy&) {
     throw exception();
   }
 };
@@ -349,10 +348,8 @@ TEST(function_test, arguments_ref) {
 }
 
 TEST(function_test, arguments_cref) {
-  int const x = 42;
-  function<int const&(int const&)> f = [](int const& a) -> int const& {
-    return a;
-  };
+  const int x = 42;
+  function<const int&(const int&)> f = [](const int& a) -> const int& { return a; };
 
   EXPECT_EQ(&x, &f(x));
 }
@@ -360,22 +357,18 @@ TEST(function_test, arguments_cref) {
 struct non_copyable {
   non_copyable() {}
 
-  non_copyable(non_copyable const&) = delete;
+  non_copyable(const non_copyable&) = delete;
   non_copyable(non_copyable&&) = default;
 };
 
 TEST(function_test, argument_by_value) {
-  function<non_copyable(non_copyable)> f = [](non_copyable a) {
-    return std::move(a);
-  };
+  function<non_copyable(non_copyable)> f = [](non_copyable a) { return std::move(a); };
   non_copyable a = f(non_copyable());
 }
 
 TEST(function_test, argument_by_value_large) {
   int big_array[1000];
-  function<non_copyable(non_copyable)> f = [big_array](non_copyable a) {
-    return std::move(a);
-  };
+  function<non_copyable(non_copyable)> f = [big_array](non_copyable a) { return std::move(a); };
   non_copyable a = f(non_copyable());
 }
 

@@ -9,13 +9,13 @@ template <typename R, typename... Args>
 struct function<R(Args...)> {
   function() noexcept;
 
-  function(function const& other);
+  function(const function& other);
   function(function&& other) noexcept;
 
   template <typename T>
   function(T val);
 
-  function& operator=(function const& rhs);
+  function& operator=(const function& rhs);
   function& operator=(function&& rhs) noexcept;
 
   ~function();
@@ -28,5 +28,5 @@ struct function<R(Args...)> {
   T* target() noexcept;
 
   template <typename T>
-  T const* target() const noexcept;
+  const T* target() const noexcept;
 };
