@@ -11,13 +11,13 @@ public:
   function() noexcept;
 
   template <typename F>
-  function(F&& func);
+  function(F func);
 
   function(const function& other);
   function(function&& other) noexcept;
 
-  function& operator=(const function& rhs);
-  function& operator=(function&& rhs) noexcept;
+  function& operator=(const function& other);
+  function& operator=(function&& other) noexcept;
 
   ~function();
 
