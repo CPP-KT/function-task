@@ -1,19 +1,20 @@
 #pragma once
 
-struct bad_function_call {};
+class bad_function_call {};
 
 template <typename F>
-struct function;
+class function;
 
 template <typename R, typename... Args>
-struct function<R(Args...)> {
+class function<R(Args...)> {
+public:
   function() noexcept;
+
+  template <typename F>
+  function(F&& func);
 
   function(const function& other);
   function(function&& other) noexcept;
-
-  template <typename T>
-  function(T val);
 
   function& operator=(const function& rhs);
   function& operator=(function&& rhs) noexcept;
