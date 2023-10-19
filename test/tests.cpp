@@ -47,8 +47,28 @@ TEST(function_test, ctor_copy) {
   EXPECT_EQ(42, g());
 }
 
+namespace {
+
+template <typename T, typename F>
+bool is_small(const F& f) {
+  return std::less_equal<>{}(static_cast<const void*>(&f), static_cast<const void*>(f.template target<T>())) &&
+         std::less<>{}(static_cast<const void*>(f.template target<T>()), static_cast<const void*>(&f + 1));
+}
+
 struct small_func {
-  small_func(int value) noexcept : value(value) {}
+  explicit small_func(int value) noexcept : value(value) {}
+
+  small_func(const small_func&) = default;
+  small_func& operator=(const small_func&) = default;
+
+  small_func(small_func&& other) noexcept {
+    *this = std::move(other);
+  }
+
+  small_func& operator=(small_func&& other) noexcept {
+    value = std::exchange(other.value, 0);
+    return *this;
+  }
 
   int operator()() const {
     return value;
@@ -62,6 +82,8 @@ private:
   int value;
 };
 
+} // namespace
+
 TEST(function_test, empty_target) {
   function<int()> f;
   EXPECT_EQ(nullptr, f.target<small_func>());
@@ -71,6 +93,7 @@ TEST(function_test, empty_target) {
 TEST(function_test, small_func) {
   function<int()> f = small_func(42);
   EXPECT_EQ(42, f());
+  EXPECT_TRUE(is_small<small_func>(f));
 }
 
 TEST(function_test, small_func_copy_ctor) {
@@ -90,6 +113,7 @@ TEST(function_test, small_func_assignment_operator) {
   function<int()> f = small_func(42);
   function<int()> g;
   g = f;
+  EXPECT_EQ(42, f());
   EXPECT_EQ(42, g());
 }
 
@@ -111,6 +135,8 @@ TEST(function_test, small_func_assignment_operator_move_self) {
   f = std::move(f);
   EXPECT_EQ(42, f());
 }
+
+namespace {
 
 struct small_func_with_pointer {
   explicit small_func_with_pointer() : pointer(this) {}
@@ -145,30 +171,39 @@ private:
   small_func_with_pointer* pointer;
 };
 
+} // namespace
+
+TEST(function_test, small_func_with_pointer) {
+  function<int()> f = small_func_with_pointer();
+  EXPECT_TRUE(is_small<small_func_with_pointer>(f));
+}
+
 TEST(function_test, small_func_with_pointer_copy_ctor) {
-  function<int()> g = small_func_with_pointer();
-  function<int()> f(g);
-  EXPECT_TRUE(f() && g());
+  function<int()> f = small_func_with_pointer();
+  function<int()> g(f);
+  EXPECT_TRUE(f());
+  EXPECT_TRUE(g());
 }
 
 TEST(function_test, small_func_with_pointer_assignment_operator_copy) {
   function<int()> f = small_func_with_pointer();
   function<int()> g = small_func_with_pointer();
   f = g;
-  EXPECT_TRUE(f() && g());
+  EXPECT_TRUE(f());
+  EXPECT_TRUE(g());
 }
 
 TEST(function_test, small_func_with_pointer_move_ctor) {
-  function<int()> g = small_func_with_pointer();
-  function<int()> f(std::move(g));
-  EXPECT_TRUE(f());
+  function<int()> f = small_func_with_pointer();
+  function<int()> g(std::move(f));
+  EXPECT_TRUE(g());
 }
 
 TEST(function_test, small_func_with_pointer_assignment_operator_move) {
   function<int()> f = small_func_with_pointer();
   function<int()> g = small_func_with_pointer();
-  f = std::move(g);
-  EXPECT_TRUE(f());
+  g = std::move(f);
+  EXPECT_TRUE(g());
 }
 
 TEST(function_test, small_func_target) {
@@ -176,6 +211,8 @@ TEST(function_test, small_func_target) {
   EXPECT_EQ(42, f.target<small_func>()->get_value());
   EXPECT_EQ(42, std::as_const(f).target<small_func>()->get_value());
 }
+
+namespace {
 
 struct large_func {
   large_func(int value) noexcept : that(this), value(value) {
@@ -214,10 +251,10 @@ private:
   int value;
   int payload[1000];
 
-  static size_t n_instances;
+  inline static size_t n_instances = 0;
 };
 
-size_t large_func::n_instances = 0;
+} // namespace
 
 TEST(function_test, large_func) {
   {
@@ -272,41 +309,7 @@ TEST(function_test, large_func_target) {
   EXPECT_EQ(42, std::as_const(f).target<large_func>()->get_value());
 }
 
-struct throwing_move {
-  struct exception final : std::exception {
-    using std::exception::exception;
-  };
-
-  throwing_move() = default;
-
-  int operator()() const {
-    return 42;
-  }
-
-  throwing_move(const throwing_move&) {
-    if (enable_exception) {
-      throw exception();
-    }
-  }
-
-  static bool enable_exception;
-};
-
-bool throwing_move::enable_exception = false;
-
-TEST(function_test, throwing_move) {
-  function<int()> f = throwing_move();
-  function<int()> g;
-  throwing_move::enable_exception = true;
-  try {
-    EXPECT_NO_THROW(g = std::move(f));
-  } catch (...) {
-    throwing_move::enable_exception = false;
-    throw;
-  }
-  throwing_move::enable_exception = false;
-  EXPECT_EQ(42, g());
-}
+namespace {
 
 struct throwing_copy {
   struct exception final : std::exception {
@@ -316,22 +319,78 @@ struct throwing_copy {
   throwing_copy() = default;
 
   int operator()() const {
-    return 42;
+    return 43;
   }
-
-  throwing_copy(throwing_copy&&) noexcept {}
 
   throwing_copy(const throwing_copy&) {
     throw exception();
   }
+
+  throwing_copy(throwing_copy&&) noexcept {}
+
+  throwing_copy& operator=(const throwing_copy&) = delete;
+  throwing_copy& operator=(throwing_copy&&) = delete;
 };
 
-TEST(function_test, throwing_copy) {
-  function<int()> f = large_func(42);
+} // namespace
+
+TEST(function_test, small_func_throwing_copy) {
+  function<int()> f = small_func(42);
   function<int()> g = throwing_copy();
+
+  EXPECT_TRUE(is_small<throwing_copy>(g));
 
   EXPECT_THROW(f = g, throwing_copy::exception);
   EXPECT_EQ(42, f());
+
+  EXPECT_NO_THROW(f = std::move(g));
+  EXPECT_EQ(43, f());
+}
+
+TEST(function_test, large_func_throwing_copy) {
+  function<int()> f = large_func(42);
+  function<int()> g = throwing_copy();
+
+  EXPECT_TRUE(is_small<throwing_copy>(g));
+
+  EXPECT_THROW(f = g, throwing_copy::exception);
+  EXPECT_EQ(42, f());
+
+  EXPECT_NO_THROW(f = std::move(g));
+  EXPECT_EQ(43, f());
+}
+
+namespace {
+
+struct throwing_move {
+  struct exception final : std::exception {
+    using std::exception::exception;
+  };
+
+  throwing_move() = default;
+
+  int operator()() const {
+    return 43;
+  }
+
+  throwing_move(const throwing_move&) noexcept {}
+
+  throwing_move(throwing_move&&) {
+    throw exception();
+  }
+
+  throwing_move& operator=(const throwing_move&) = delete;
+  throwing_move& operator=(throwing_move&&) = delete;
+};
+
+} // namespace
+
+TEST(function_test, throwing_move) {
+  function<int()> f = small_func(42);
+  function<int()> g = throwing_copy();
+
+  EXPECT_NO_THROW(f = std::move(g));
+  EXPECT_EQ(43, f());
 }
 
 TEST(function_test, arguments) {
@@ -354,12 +413,16 @@ TEST(function_test, arguments_cref) {
   EXPECT_EQ(&x, &f(x));
 }
 
+namespace {
+
 struct non_copyable {
   non_copyable() {}
 
   non_copyable(const non_copyable&) = delete;
   non_copyable(non_copyable&&) = default;
 };
+
+} // namespace
 
 TEST(function_test, argument_by_value) {
   function<non_copyable(non_copyable)> f = [](non_copyable a) { return std::move(a); };
@@ -386,15 +449,15 @@ TEST(function_test, recursive_test) {
   EXPECT_EQ(55, fib(10));
 }
 
-struct foo {
-  void operator()() const {}
-};
-
-struct bar {
-  void operator()() const {}
-};
-
 TEST(function_test, target) {
+  struct foo {
+    void operator()() const {}
+  };
+
+  struct bar {
+    void operator()() const {}
+  };
+
   function<void()> f = foo();
   EXPECT_NE(nullptr, f.target<foo>());
   EXPECT_EQ(nullptr, f.target<bar>());
@@ -405,9 +468,4 @@ TEST(function_test, target) {
   EXPECT_NE(nullptr, f.target<bar>());
   EXPECT_EQ(nullptr, std::as_const(f).target<foo>());
   EXPECT_NE(nullptr, std::as_const(f).target<bar>());
-}
-
-int main(int argc, char* argv[]) {
-  testing::InitGoogleTest(&argc, argv);
-  return RUN_ALL_TESTS();
 }
