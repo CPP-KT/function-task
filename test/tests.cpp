@@ -430,8 +430,11 @@ TEST(function_test, argument_by_value) {
 }
 
 TEST(function_test, argument_by_value_large) {
-  [[maybe_unused]] int big_array[1000]{};
-  function<non_copyable(non_copyable)> f = [big_array](non_copyable a) { return std::move(a); };
+  int big_array[1000]{};
+  function<non_copyable(non_copyable)> f = [big_array](non_copyable a) {
+    (void)big_array;
+    return std::move(a);
+  };
   [[maybe_unused]] non_copyable a = f(non_copyable());
 }
 
@@ -477,8 +480,11 @@ TEST(function_test, mutable_small) {
 }
 
 TEST(function_test, mutable_large) {
-  [[maybe_unused]] int big_array[1000]{};
-  function<int()> f = [x = 0, big_array]() mutable { return ++x; };
+  int big_array[1000]{};
+  function<int()> f = [x = 0, big_array]() mutable {
+    (void)big_array;
+    return ++x;
+  };
   EXPECT_EQ(1, f());
   EXPECT_EQ(2, f());
 }
