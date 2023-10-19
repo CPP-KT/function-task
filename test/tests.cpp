@@ -247,9 +247,9 @@ struct large_func {
   }
 
 private:
-  large_func* that;
+  [[maybe_unused]] large_func* that;
   int value;
-  int payload[1000];
+  [[maybe_unused]] int payload[1000];
 
   inline static size_t n_instances = 0;
 };
@@ -426,13 +426,16 @@ struct non_copyable {
 
 TEST(function_test, argument_by_value) {
   function<non_copyable(non_copyable)> f = [](non_copyable a) { return std::move(a); };
-  non_copyable a = f(non_copyable());
+  [[maybe_unused]] non_copyable a = f(non_copyable());
 }
 
 TEST(function_test, argument_by_value_large) {
-  int big_array[1000];
-  function<non_copyable(non_copyable)> f = [big_array](non_copyable a) { return std::move(a); };
-  non_copyable a = f(non_copyable());
+  int big_array[1000]{};
+  function<non_copyable(non_copyable)> f = [big_array](non_copyable a) {
+    (void)big_array;
+    return std::move(a);
+  };
+  [[maybe_unused]] non_copyable a = f(non_copyable());
 }
 
 TEST(function_test, recursive_test) {

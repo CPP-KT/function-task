@@ -22,6 +22,7 @@ else()
     target_compile_options(tests PRIVATE -Werror -pedantic-errors)
   endif()
   target_compile_options(tests PRIVATE -Wno-self-move)
+  target_compile_options(tests PRIVATE -Wno-redundant-move)
 endif()
 
 # Compiler specific warnings
