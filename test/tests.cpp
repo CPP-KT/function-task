@@ -101,6 +101,12 @@ TEST(function_test, small_func) {
   EXPECT_TRUE(is_small<small_func>(f));
 }
 
+TEST(function_test, small_func_const) {
+  const function<int()> f = small_func(42);
+  EXPECT_EQ(42, f());
+  EXPECT_TRUE(is_small<small_func>(f));
+}
+
 TEST(function_test, small_func_copy_ctor) {
   function<int()> f = small_func(42);
   function<int()> g = f;
@@ -264,6 +270,14 @@ private:
 TEST(function_test, large_func) {
   {
     function<int()> f = large_func(42);
+    EXPECT_EQ(42, f());
+  }
+  large_func::assert_no_instances();
+}
+
+TEST(function_test, large_func_const) {
+  {
+    const function<int()> f = large_func(42);
     EXPECT_EQ(42, f());
   }
   large_func::assert_no_instances();
