@@ -11,12 +11,17 @@ TEST(function_test, default_ctor) {
 TEST(function_test, empty_convertion_to_bool) {
   function<void()> x;
   EXPECT_FALSE(static_cast<bool>(x));
-  EXPECT_THROW(x(), bad_function_call);
 }
 
 TEST(function_test, empty_call) {
   function<void()> x;
   EXPECT_THROW(x(), bad_function_call);
+  try {
+    x();
+  } catch (const std::exception& e) {
+    std::exception basic_exception;
+    EXPECT_NE(basic_exception.what(), e.what());
+  }
 }
 
 TEST(function_test, empty_copy_move) {
