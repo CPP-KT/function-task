@@ -513,3 +513,90 @@ TEST(function_test, mutable_large) {
   EXPECT_EQ(1, f());
   EXPECT_EQ(2, f());
 }
+
+struct tracking_func {
+  struct tracker_type {
+    size_t destructors = 0;
+    size_t moves = 0;
+  };
+
+  tracking_func(tracker_type* tracker) noexcept : tracker(tracker) {}
+
+  tracking_func(const tracking_func& other) : tracker(other.tracker) {
+    throw std::logic_error("This constructor should never be called");
+  }
+
+  tracking_func(tracking_func&& other) noexcept : tracker(other.tracker) {
+    ++tracker->moves;
+  }
+
+  tracking_func& operator=(const tracking_func&) = delete;
+  tracking_func& operator=(tracking_func&&) = delete;
+
+  void operator()() const noexcept {}
+
+  ~tracking_func() {
+    ++tracker->destructors;
+  }
+
+private:
+  tracker_type* tracker;
+};
+
+struct large_tracking_func : tracking_func {
+  using tracking_func::tracking_func;
+
+  [[maybe_unused]] int payload[1000];
+};
+
+TEST(function_test, move_assignment_large_to_small) {
+  tracking_func::tracker_type ts;
+  tracking_func::tracker_type tl;
+
+  {
+    function<void()> small = tracking_func(&ts);
+    EXPECT_TRUE(is_small<tracking_func>(small));
+    EXPECT_EQ(1, ts.moves);
+    ts = {};
+
+    function<void()> large = large_tracking_func(&tl);
+    EXPECT_FALSE(is_small<large_tracking_func>(large));
+    EXPECT_EQ(1, tl.moves);
+    tl = {};
+
+    small = std::move(large);
+    EXPECT_EQ(0, tl.moves);
+    EXPECT_EQ(0, tl.destructors);
+    EXPECT_LE(1, ts.destructors);
+  }
+
+  EXPECT_EQ(0, tl.moves);
+  EXPECT_EQ(1, tl.destructors);
+  EXPECT_EQ(ts.moves + 1, ts.destructors);
+}
+
+TEST(function_test, move_assignment_small_to_large) {
+  tracking_func::tracker_type ts;
+  tracking_func::tracker_type tl;
+
+  {
+    function<void()> small = tracking_func(&ts);
+    EXPECT_TRUE(is_small<tracking_func>(small));
+    EXPECT_EQ(1, ts.moves);
+    ts = {};
+
+    function<void()> large = large_tracking_func(&tl);
+    EXPECT_FALSE(is_small<large_tracking_func>(large));
+    EXPECT_EQ(1, tl.moves);
+    tl = {};
+
+    large = std::move(small);
+    EXPECT_EQ(0, tl.moves);
+    EXPECT_EQ(1, tl.destructors);
+    EXPECT_LE(1, ts.moves);
+  }
+
+  EXPECT_EQ(0, tl.moves);
+  EXPECT_EQ(1, tl.destructors);
+  EXPECT_EQ(ts.moves + 1, ts.destructors);
+}
