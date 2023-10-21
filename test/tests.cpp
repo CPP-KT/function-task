@@ -376,18 +376,24 @@ struct throwing_move {
   throwing_move(const throwing_move&) noexcept {}
 
   throwing_move(throwing_move&&) {
-    throw exception();
+    if (enable_exception) {
+      throw exception();
+    }
   }
 
   throwing_move& operator=(const throwing_move&) = delete;
   throwing_move& operator=(throwing_move&&) = delete;
+
+  bool enable_exception = false;
 };
 
 } // namespace
 
 TEST(function_test, throwing_move) {
   function<int()> f = small_func(42);
-  function<int()> g = throwing_copy();
+  function<int()> g = throwing_move();
+
+  g.target<throwing_move>()->enable_exception = true;
 
   EXPECT_NO_THROW(f = std::move(g));
   EXPECT_EQ(43, f());
