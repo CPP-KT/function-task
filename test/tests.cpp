@@ -260,7 +260,7 @@ struct large_func {
 private:
   [[maybe_unused]] large_func* that;
   int value;
-  [[maybe_unused]] int payload[1000];
+  [[maybe_unused]] int payload[1000]{};
 
   inline static size_t n_instances = 0;
 };
@@ -546,7 +546,7 @@ private:
 struct large_tracking_func : tracking_func {
   using tracking_func::tracking_func;
 
-  [[maybe_unused]] int payload[1000];
+  [[maybe_unused]] int payload[1000]{};
 };
 
 TEST(function_test, move_assignment_large_to_small) {
