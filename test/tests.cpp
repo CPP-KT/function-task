@@ -128,20 +128,20 @@ TEST(function_test, small_func_copy_assignment_operator) {
   EXPECT_EQ(42, g());
 }
 
-TEST(function_test, small_func_move_assignment_operator) {
+TEST(function_test, small_func_move_assignment) {
   function<int()> f = small_func(42);
   function<int()> g;
   g = std::move(f);
   EXPECT_EQ(42, g());
 }
 
-TEST(function_test, small_func_copy_assignment_operator_self) {
+TEST(function_test, small_func_copy_assignment_self) {
   function<int()> f = small_func(42);
   f = f;
   EXPECT_EQ(42, f());
 }
 
-TEST(function_test, small_func_move_assignment_operator_self) {
+TEST(function_test, small_func_move_assignment_self) {
   function<int()> f = small_func(42);
   f = std::move(f);
   EXPECT_EQ(42, f());
@@ -196,7 +196,7 @@ TEST(function_test, small_func_with_pointer_copy_ctor) {
   EXPECT_TRUE(g());
 }
 
-TEST(function_test, small_func_with_pointer_copy_assignment_operator) {
+TEST(function_test, small_func_with_pointer_copy_assignment) {
   function<int()> f = small_func_with_pointer();
   function<int()> g = small_func_with_pointer();
   f = g;
@@ -210,7 +210,7 @@ TEST(function_test, small_func_with_pointer_move_ctor) {
   EXPECT_TRUE(g());
 }
 
-TEST(function_test, small_func_with_pointer_move_assignment_operator) {
+TEST(function_test, small_func_with_pointer_move_assignment) {
   function<int()> f = small_func_with_pointer();
   function<int()> g = small_func_with_pointer();
   g = std::move(f);
@@ -296,27 +296,27 @@ TEST(function_test, large_func_move_ctor) {
   EXPECT_EQ(42, g());
 }
 
-TEST(function_test, large_func_copy_assignment_operator) {
+TEST(function_test, large_func_copy_assignment) {
   function<int()> f = large_func(42);
   function<int()> g;
   g = f;
   EXPECT_EQ(42, g());
 }
 
-TEST(function_test, large_func_move_assignment_operator) {
+TEST(function_test, large_func_move_assignment) {
   function<int()> f = large_func(42);
   function<int()> g;
   g = std::move(f);
   EXPECT_EQ(42, g());
 }
 
-TEST(function_test, large_func_copy_assignment_operator_self) {
+TEST(function_test, large_func_copy_assignment_self) {
   function<int()> f = large_func(42);
   f = f;
   EXPECT_EQ(42, f());
 }
 
-TEST(function_test, large_func_move_assignment_operator_self) {
+TEST(function_test, large_func_move_assignment_self) {
   function<int()> f = large_func(42);
   f = std::move(f);
   EXPECT_EQ(42, f());
