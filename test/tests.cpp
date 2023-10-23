@@ -83,6 +83,10 @@ struct small_func {
     return value;
   }
 
+  int set_value(int new_value) {
+    return value = new_value;
+  }
+
 private:
   int value;
 };
@@ -107,10 +111,24 @@ TEST(function_test, small_func_const) {
   EXPECT_TRUE(is_small<small_func>(f));
 }
 
+TEST(function_test, small_func_target) {
+  function<int()> f = small_func(42);
+  EXPECT_EQ(42, f.target<small_func>()->get_value());
+  EXPECT_EQ(42, std::as_const(f).target<small_func>()->get_value());
+}
+
 TEST(function_test, small_func_copy_ctor) {
   function<int()> f = small_func(42);
   function<int()> g = f;
   EXPECT_EQ(42, f());
+  EXPECT_EQ(42, g());
+}
+
+TEST(function_test, small_func_copy_ctor_independence) {
+  function<int()> f = small_func(42);
+  function<int()> g = f;
+  f.target<small_func>()->set_value(55);
+  EXPECT_EQ(55, f());
   EXPECT_EQ(42, g());
 }
 
@@ -125,6 +143,15 @@ TEST(function_test, small_func_copy_assignment_operator) {
   function<int()> g;
   g = f;
   EXPECT_EQ(42, f());
+  EXPECT_EQ(42, g());
+}
+
+TEST(function_test, small_func_copy_assignment_independence) {
+  function<int()> f = small_func(42);
+  function<int()> g;
+  g = f;
+  f.target<small_func>()->set_value(55);
+  EXPECT_EQ(55, f());
   EXPECT_EQ(42, g());
 }
 
@@ -217,12 +244,6 @@ TEST(function_test, small_func_with_pointer_move_assignment) {
   EXPECT_TRUE(g());
 }
 
-TEST(function_test, small_func_target) {
-  function<int()> f = small_func(42);
-  EXPECT_EQ(42, f.target<small_func>()->get_value());
-  EXPECT_EQ(42, std::as_const(f).target<small_func>()->get_value());
-}
-
 namespace {
 
 struct large_func {
@@ -257,6 +278,10 @@ struct large_func {
     return value;
   }
 
+  int set_value(int new_value) {
+    return value = new_value;
+  }
+
 private:
   [[maybe_unused]] large_func* that;
   int value;
@@ -283,10 +308,24 @@ TEST(function_test, large_func_const) {
   large_func::assert_no_instances();
 }
 
+TEST(function_test, large_func_target) {
+  function<int()> f = large_func(42);
+  EXPECT_EQ(42, f.target<large_func>()->get_value());
+  EXPECT_EQ(42, std::as_const(f).target<large_func>()->get_value());
+}
+
 TEST(function_test, large_func_copy_ctor) {
   function<int()> f = large_func(42);
   function<int()> g = f;
   EXPECT_EQ(42, f());
+  EXPECT_EQ(42, g());
+}
+
+TEST(function_test, large_func_copy_ctor_independence) {
+  function<int()> f = large_func(42);
+  function<int()> g = f;
+  f.target<large_func>()->set_value(55);
+  EXPECT_EQ(55, f());
   EXPECT_EQ(42, g());
 }
 
@@ -300,6 +339,15 @@ TEST(function_test, large_func_copy_assignment) {
   function<int()> f = large_func(42);
   function<int()> g;
   g = f;
+  EXPECT_EQ(42, g());
+}
+
+TEST(function_test, large_func_copy_assignment_independence) {
+  function<int()> f = large_func(42);
+  function<int()> g;
+  g = f;
+  f.target<large_func>()->set_value(55);
+  EXPECT_EQ(55, f());
   EXPECT_EQ(42, g());
 }
 
@@ -320,12 +368,6 @@ TEST(function_test, large_func_move_assignment_self) {
   function<int()> f = large_func(42);
   f = std::move(f);
   EXPECT_EQ(42, f());
-}
-
-TEST(function_test, large_func_target) {
-  function<int()> f = large_func(42);
-  EXPECT_EQ(42, f.target<large_func>()->get_value());
-  EXPECT_EQ(42, std::as_const(f).target<large_func>()->get_value());
 }
 
 namespace {
