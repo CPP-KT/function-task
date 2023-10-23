@@ -642,3 +642,34 @@ TEST(function_test, move_assignment_small_to_large) {
   EXPECT_EQ(1, tl.destructors);
   EXPECT_EQ(ts.moves + 1, ts.destructors);
 }
+
+namespace {
+
+template <size_t... Is, typename F>
+void static_for_each(std::index_sequence<Is...>, F f) {
+  (f.template operator()<Is>(), ...);
+}
+
+} // namespace
+
+TEST(function_test, different_sizes) {
+  using base_sizes = std::index_sequence<1, 2, 4, 8, 16, 32, 64, 128, 256>;
+  using multipliers = std::index_sequence<1, 3, 5, 7, 9, 11, 13, 15>;
+
+  static_for_each(base_sizes{}, []<size_t BASE_SIZE>() {
+    static_for_each(multipliers{}, []<size_t MULTIPLIER>() {
+      static constexpr size_t SIZE = BASE_SIZE * MULTIPLIER;
+
+      struct sized_func {
+        size_t operator()() const noexcept {
+          return SIZE;
+        }
+
+        std::array<std::byte, SIZE> payload{};
+      };
+
+      function<size_t()> f = sized_func();
+      EXPECT_EQ(SIZE, f());
+    });
+  });
+}
