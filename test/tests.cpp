@@ -669,6 +669,7 @@ TEST(function_test, different_sizes) {
       };
 
       function<size_t()> f = sized_func();
+      f.target<sized_func>()->payload.fill(std::byte{});
       EXPECT_EQ(SIZE, f());
     });
   });
