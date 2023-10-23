@@ -40,12 +40,17 @@ TEST(function_test, empty_copy_move) {
   EXPECT_FALSE(static_cast<bool>(y));
 }
 
-TEST(function_test, ctor_func) {
+TEST(function_test, lambda) {
   function<int()> f = [] { return 42; };
   EXPECT_EQ(42, f());
 }
 
-TEST(function_test, ctor_copy) {
+TEST(function_test, pointer_to_function) {
+  function<int()> f = +[] { return 42; };
+  EXPECT_EQ(42, f());
+}
+
+TEST(function_test, copy_ctor) {
   function<int()> f = [] { return 42; };
   function<int()> g = f;
   EXPECT_EQ(42, f());
