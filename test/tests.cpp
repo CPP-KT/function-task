@@ -64,6 +64,21 @@ TEST(function_test, copy_ctor) {
   EXPECT_EQ(42, g());
 }
 
+TEST(function_test, nullptr_construct) {
+  function<int()> f(nullptr);
+  EXPECT_FALSE(f);
+  EXPECT_THROW(f(), bad_function_call);
+}
+
+TEST(function_test, nullptr_assign) {
+  function<int()> f = []() { return 42; };
+  EXPECT_TRUE(f);
+  EXPECT_EQ(f(), 42);
+  f = nullptr;
+  EXPECT_FALSE(f);
+  EXPECT_THROW(f(), bad_function_call);
+}
+
 namespace {
 
 template <typename T, typename F>
