@@ -150,12 +150,28 @@ TEST(function_test, small_func_move_ctor) {
   EXPECT_EQ(42, g());
 }
 
-TEST(function_test, small_func_copy_assignment_operator) {
+TEST(function_test, small_func_copy_assignment) {
+  function<int()> f = small_func(42);
+  function<int()> g = small_func(55);
+  g = f;
+  EXPECT_EQ(42, f());
+  EXPECT_EQ(42, g());
+}
+
+TEST(function_test, small_func_copy_assignment_to_empty) {
   function<int()> f = small_func(42);
   function<int()> g;
   g = f;
   EXPECT_EQ(42, f());
   EXPECT_EQ(42, g());
+}
+
+TEST(function_test, small_func_copy_assignment_from_empty) {
+  function<int()> f;
+  function<int()> g = small_func(55);
+  g = f;
+  EXPECT_FALSE(f);
+  EXPECT_FALSE(g);
 }
 
 TEST(function_test, small_func_copy_assignment_independence) {
@@ -169,9 +185,23 @@ TEST(function_test, small_func_copy_assignment_independence) {
 
 TEST(function_test, small_func_move_assignment) {
   function<int()> f = small_func(42);
+  function<int()> g = small_func(55);
+  g = std::move(f);
+  EXPECT_EQ(42, g());
+}
+
+TEST(function_test, small_func_move_assignment_to_empty) {
+  function<int()> f = small_func(42);
   function<int()> g;
   g = std::move(f);
   EXPECT_EQ(42, g());
+}
+
+TEST(function_test, small_func_move_assignment_from_empty) {
+  function<int()> f;
+  function<int()> g = small_func(55);
+  g = std::move(f);
+  EXPECT_FALSE(g);
 }
 
 TEST(function_test, small_func_copy_assignment_self) {
@@ -349,9 +379,26 @@ TEST(function_test, large_func_move_ctor) {
 
 TEST(function_test, large_func_copy_assignment) {
   function<int()> f = large_func(42);
+  function<int()> g = large_func(55);
+  g = f;
+  EXPECT_EQ(42, f());
+  EXPECT_EQ(42, g());
+}
+
+TEST(function_test, large_func_copy_assignment_to_empty) {
+  function<int()> f = large_func(42);
   function<int()> g;
   g = f;
+  EXPECT_EQ(42, f());
   EXPECT_EQ(42, g());
+}
+
+TEST(function_test, large_func_copy_assignment_from_empty) {
+  function<int()> f;
+  function<int()> g = large_func(55);
+  g = f;
+  EXPECT_FALSE(f);
+  EXPECT_FALSE(g);
 }
 
 TEST(function_test, large_func_copy_assignment_independence) {
@@ -365,9 +412,23 @@ TEST(function_test, large_func_copy_assignment_independence) {
 
 TEST(function_test, large_func_move_assignment) {
   function<int()> f = large_func(42);
+  function<int()> g = large_func(55);
+  g = std::move(f);
+  EXPECT_EQ(42, g());
+}
+
+TEST(function_test, large_func_move_assignment_to_empty) {
+  function<int()> f = large_func(42);
   function<int()> g;
   g = std::move(f);
   EXPECT_EQ(42, g());
+}
+
+TEST(function_test, large_func_move_assignment_from_empty) {
+  function<int()> f;
+  function<int()> g = large_func(55);
+  g = std::move(f);
+  EXPECT_FALSE(g);
 }
 
 TEST(function_test, large_func_copy_assignment_self) {
