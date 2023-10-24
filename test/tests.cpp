@@ -2,6 +2,13 @@
 
 #include <gtest/gtest.h>
 
+#include <array>
+#include <cstddef>
+#include <exception>
+#include <functional>
+#include <stdexcept>
+#include <utility>
+
 TEST(function_test, default_ctor) {
   function<void()> x;
   function<void(int, int, int)> y;
