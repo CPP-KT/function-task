@@ -446,7 +446,9 @@ struct throwing_move {
     return 43;
   }
 
-  throwing_move(const throwing_move& other) noexcept : enable_exception(other.enable_exception) {}
+  throwing_move(const throwing_move& other) : enable_exception(other.enable_exception) {
+    throw exception();
+  }
 
   throwing_move(throwing_move&& other) : enable_exception(other.enable_exception) {
     if (enable_exception) {
