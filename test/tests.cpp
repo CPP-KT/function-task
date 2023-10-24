@@ -66,16 +66,16 @@ TEST(function_test, copy_ctor) {
 
 TEST(function_test, nullptr_construct) {
   function<int()> f(nullptr);
-  EXPECT_FALSE(f);
+  EXPECT_FALSE(static_cast<bool>(f));
   EXPECT_THROW(f(), bad_function_call);
 }
 
 TEST(function_test, nullptr_assign) {
   function<int()> f = []() { return 42; };
-  EXPECT_TRUE(f);
+  EXPECT_TRUE(static_cast<bool>(f));
   EXPECT_EQ(f(), 42);
   f = nullptr;
-  EXPECT_FALSE(f);
+  EXPECT_FALSE(static_cast<bool>(f));
   EXPECT_THROW(f(), bad_function_call);
 }
 
