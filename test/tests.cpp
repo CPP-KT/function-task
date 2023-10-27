@@ -148,6 +148,7 @@ TEST(function_test, small_func_move_ctor) {
   function<int()> f = small_func(42);
   function<int()> g = std::move(f);
   EXPECT_EQ(42, g());
+  EXPECT_FALSE(f);
 }
 
 TEST(function_test, small_func_copy_assignment) {
@@ -188,6 +189,7 @@ TEST(function_test, small_func_move_assignment) {
   function<int()> g = small_func(55);
   g = std::move(f);
   EXPECT_EQ(42, g());
+  EXPECT_TRUE(!f || f() == 55);
 }
 
 TEST(function_test, small_func_move_assignment_to_empty) {
@@ -195,6 +197,7 @@ TEST(function_test, small_func_move_assignment_to_empty) {
   function<int()> g;
   g = std::move(f);
   EXPECT_EQ(42, g());
+  EXPECT_FALSE(f);
 }
 
 TEST(function_test, small_func_move_assignment_from_empty) {
