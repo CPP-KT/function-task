@@ -562,24 +562,25 @@ TEST(function_test, arguments) {
     return a + b;
   };
 
-  EXPECT_EQ(42, f(40, 2));
+  int x = 2;
+  EXPECT_EQ(42, f(40, x));
 }
 
 TEST(function_test, arguments_ref) {
-  int x = 42;
   function<int&(int&)> f = [](int& a) -> int& {
     return a;
   };
 
+  int x = 42;
   EXPECT_EQ(&x, &f(x));
 }
 
 TEST(function_test, arguments_cref) {
-  const int x = 42;
   function<const int&(const int&)> f = [](const int& a) -> const int& {
     return a;
   };
 
+  const int x = 42;
   EXPECT_EQ(&x, &f(x));
 }
 
@@ -751,6 +752,17 @@ TEST(function_test, move_assignment_small_to_large) {
   EXPECT_EQ(0, tl.moves);
   EXPECT_EQ(1, tl.destructors);
   EXPECT_EQ(ts.moves + 1, ts.destructors);
+}
+
+TEST(function_test, arguments_efficient_forwarding) {
+  tracking_func::tracker_type t;
+
+  function<int(tracking_func)> f = [](tracking_func) {
+    return 42;
+  };
+
+  EXPECT_EQ(f(tracking_func(&t)), 42);
+  EXPECT_LE(t.moves, 1);
 }
 
 namespace {
