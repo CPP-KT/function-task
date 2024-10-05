@@ -48,17 +48,23 @@ TEST(function_test, empty_copy_move) {
 }
 
 TEST(function_test, lambda) {
-  function<int()> f = [] { return 42; };
+  function<int()> f = [] {
+    return 42;
+  };
   EXPECT_EQ(42, f());
 }
 
 TEST(function_test, pointer_to_function) {
-  function<int()> f = +[] { return 42; };
+  function<int()> f = +[] {
+    return 42;
+  };
   EXPECT_EQ(42, f());
 }
 
 TEST(function_test, copy_ctor) {
-  function<int()> f = [] { return 42; };
+  function<int()> f = [] {
+    return 42;
+  };
   function<int()> g = f;
   EXPECT_EQ(42, f());
   EXPECT_EQ(42, g());
@@ -73,7 +79,8 @@ bool is_small(const F& f) {
 }
 
 struct small_func {
-  explicit small_func(int value) noexcept : value(value) {}
+  explicit small_func(int value) noexcept
+      : value(value) {}
 
   small_func(const small_func&) = default;
   small_func& operator=(const small_func&) = default;
@@ -222,13 +229,15 @@ TEST(function_test, small_func_move_assignment_self) {
 namespace {
 
 struct small_func_with_pointer {
-  explicit small_func_with_pointer() : pointer(this) {}
+  explicit small_func_with_pointer()
+      : pointer(this) {}
 
   void swap(small_func_with_pointer& other) noexcept {
     std::swap(pointer, other.pointer);
   }
 
-  small_func_with_pointer(const small_func_with_pointer&) noexcept : pointer(this) {}
+  small_func_with_pointer(const small_func_with_pointer&) noexcept
+      : pointer(this) {}
 
   small_func_with_pointer& operator=(const small_func_with_pointer& other) noexcept {
     if (this != &other) {
@@ -237,7 +246,8 @@ struct small_func_with_pointer {
     return *this;
   }
 
-  small_func_with_pointer(small_func_with_pointer&&) noexcept : pointer(this) {}
+  small_func_with_pointer(small_func_with_pointer&&) noexcept
+      : pointer(this) {}
 
   small_func_with_pointer& operator=(small_func_with_pointer&& other) noexcept {
     if (this != &other) {
@@ -292,11 +302,15 @@ TEST(function_test, small_func_with_pointer_move_assignment) {
 namespace {
 
 struct large_func {
-  large_func(int value) noexcept : that(this), value(value) {
+  large_func(int value) noexcept
+      : that(this)
+      , value(value) {
     ++n_instances;
   }
 
-  large_func(const large_func& other) noexcept : that(this), value(other.value) {
+  large_func(const large_func& other) noexcept
+      : that(this)
+      , value(other.value) {
     ++n_instances;
   }
 
@@ -513,11 +527,13 @@ struct throwing_move {
     return 43;
   }
 
-  throwing_move(const throwing_move& other) : enable_exception(other.enable_exception) {
+  throwing_move(const throwing_move& other)
+      : enable_exception(other.enable_exception) {
     throw exception();
   }
 
-  throwing_move(throwing_move&& other) : enable_exception(other.enable_exception) {
+  throwing_move(throwing_move&& other)
+      : enable_exception(other.enable_exception) {
     if (enable_exception) {
       throw exception();
     }
@@ -542,21 +558,27 @@ TEST(function_test, throwing_move) {
 }
 
 TEST(function_test, arguments) {
-  function<int(int, int)> f = [](int a, int b) { return a + b; };
+  function<int(int, int)> f = [](int a, int b) {
+    return a + b;
+  };
 
   EXPECT_EQ(42, f(40, 2));
 }
 
 TEST(function_test, arguments_ref) {
   int x = 42;
-  function<int&(int&)> f = [](int& a) -> int& { return a; };
+  function<int&(int&)> f = [](int& a) -> int& {
+    return a;
+  };
 
   EXPECT_EQ(&x, &f(x));
 }
 
 TEST(function_test, arguments_cref) {
   const int x = 42;
-  function<const int&(const int&)> f = [](const int& a) -> const int& { return a; };
+  function<const int&(const int&)> f = [](const int& a) -> const int& {
+    return a;
+  };
 
   EXPECT_EQ(&x, &f(x));
 }
@@ -573,14 +595,16 @@ struct non_copyable {
 } // namespace
 
 TEST(function_test, argument_by_value) {
-  function<non_copyable(non_copyable)> f = [](non_copyable a) { return std::move(a); };
+  function<non_copyable(non_copyable)> f = [](non_copyable a) {
+    return std::move(a);
+  };
   [[maybe_unused]] non_copyable a = f(non_copyable());
 }
 
 TEST(function_test, argument_by_value_large) {
   int big_array[1000]{};
   function<non_copyable(non_copyable)> f = [big_array](non_copyable a) {
-    (void)big_array;
+    (void) big_array;
     return std::move(a);
   };
   [[maybe_unused]] non_copyable a = f(non_copyable());
@@ -622,7 +646,9 @@ TEST(function_test, target) {
 }
 
 TEST(function_test, mutable_small) {
-  function<int()> f = [x = 0]() mutable { return ++x; };
+  function<int()> f = [x = 0]() mutable {
+    return ++x;
+  };
   EXPECT_EQ(1, f());
   EXPECT_EQ(2, f());
 }
@@ -630,7 +656,7 @@ TEST(function_test, mutable_small) {
 TEST(function_test, mutable_large) {
   int big_array[1000]{};
   function<int()> f = [x = 0, big_array]() mutable {
-    (void)big_array;
+    (void) big_array;
     return ++x;
   };
   EXPECT_EQ(1, f());
@@ -643,13 +669,16 @@ struct tracking_func {
     size_t moves = 0;
   };
 
-  tracking_func(tracker_type* tracker) noexcept : tracker(tracker) {}
+  tracking_func(tracker_type* tracker) noexcept
+      : tracker(tracker) {}
 
-  tracking_func(const tracking_func& other) : tracker(other.tracker) {
+  tracking_func(const tracking_func& other)
+      : tracker(other.tracker) {
     throw std::logic_error("This constructor should never be called");
   }
 
-  tracking_func(tracking_func&& other) noexcept : tracker(other.tracker) {
+  tracking_func(tracking_func&& other) noexcept
+      : tracker(other.tracker) {
     ++tracker->moves;
   }
 
