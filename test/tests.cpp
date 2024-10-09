@@ -654,9 +654,27 @@ TEST(function_test, mutable_small) {
   EXPECT_EQ(f(), 2);
 }
 
+TEST(function_test, mutable_small_const) {
+  const function<int()> f = [x = 0]() mutable {
+    return ++x;
+  };
+  EXPECT_EQ(f(), 1);
+  EXPECT_EQ(f(), 2);
+}
+
 TEST(function_test, mutable_large) {
   int big_array[1000]{};
   function<int()> f = [x = 0, big_array]() mutable {
+    (void) big_array;
+    return ++x;
+  };
+  EXPECT_EQ(f(), 1);
+  EXPECT_EQ(f(), 2);
+}
+
+TEST(function_test, mutable_large_const) {
+  int big_array[1000]{};
+  const function<int()> f = [x = 0, big_array]() mutable {
     (void) big_array;
     return ++x;
   };
