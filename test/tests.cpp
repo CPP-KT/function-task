@@ -790,6 +790,15 @@ void static_for_each(std::index_sequence<Is...>, F f) {
   (f.template operator()<Is>(), ...);
 }
 
+template <size_t SIZE>
+struct sized_func {
+  size_t operator()() const noexcept {
+    return SIZE;
+  }
+
+  std::array<std::byte, SIZE> payload{};
+};
+
 } // namespace
 
 TEST(function_test, different_sizes) {
@@ -800,16 +809,26 @@ TEST(function_test, different_sizes) {
     static_for_each(multipliers{}, []<size_t MULTIPLIER>() {
       static constexpr size_t SIZE = BASE_SIZE * MULTIPLIER;
 
-      struct sized_func {
-        size_t operator()() const noexcept {
-          return SIZE;
-        }
+      function<size_t()> f = sized_func<SIZE>();
+      f.target<sized_func<SIZE>>()->payload.fill(std::byte{});
+      EXPECT_EQ(f(), SIZE);
+    });
+  });
+}
 
-        std::array<std::byte, SIZE> payload{};
-      };
+TEST(function_test, alignment) {
+  using alignments = std::index_sequence<1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192>;
 
-      function<size_t()> f = sized_func();
-      f.target<sized_func>()->payload.fill(std::byte{});
+  static_for_each(alignments{}, []<size_t ALIGNMENT>() {
+    using sizes = std::index_sequence<1, ALIGNMENT>;
+
+    static_for_each(sizes{}, []<size_t SIZE>() {
+      struct alignas(ALIGNMENT) aligned_func : sized_func<SIZE> {};
+
+      function<size_t()> f = aligned_func();
+      auto* target = f.target<aligned_func>();
+      target->payload.fill(std::byte{});
+      EXPECT_EQ(reinterpret_cast<uintptr_t>(target) % ALIGNMENT, 0);
       EXPECT_EQ(f(), SIZE);
     });
   });
