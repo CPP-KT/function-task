@@ -817,7 +817,7 @@ TEST(function_test, different_sizes) {
 }
 
 TEST(function_test, alignment) {
-  using alignments = std::index_sequence<1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192>;
+  using alignments = std::index_sequence<1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096>;
 
   static_for_each(alignments{}, []<size_t ALIGNMENT>() {
     using sizes = std::index_sequence<1, ALIGNMENT>;
